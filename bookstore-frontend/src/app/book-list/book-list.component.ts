@@ -7,6 +7,7 @@ import { BookStoreService } from '../shared/book-store.service';
   templateUrl: './book-list.component.html',
   styleUrls: []
 })
+
 export class BookListComponent implements OnInit {
 
   books : Book[];
@@ -16,13 +17,8 @@ export class BookListComponent implements OnInit {
   constructor(private bs: BookStoreService) { }
 
   ngOnInit(): void {
-    this.books = this.bs.getAll();
+    this.bs.getAll().subscribe(res => this.books = res);
+    console.log('observer registered');
   }
-
-  showDetails (book: Book) {
-    this.showDetailsEvent.emit(book);
-  }
-
-
 
 }
