@@ -3,6 +3,7 @@ import { Book, Author, Image } from './book';
 import { HttpClient } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError, retry } from "rxjs/operators";
+import {isObservable} from "rxjs/internal-compatibility";
 
 @Injectable()
 export class BookStoreService {
@@ -24,6 +25,21 @@ export class BookStoreService {
 
   remove(isbn: string) : Observable<any> {
     return this.http.delete(`${this.api}/book/${isbn}`)
+        .pipe(retry(3)).pipe(catchError(this.errorHandler));
+  }
+
+  create (book : Book) : Observable<any>{
+    return this.http.post(`${this.api}/book`, book)
+        .pipe(retry(3)).pipe(catchError(this.errorHandler));
+  }
+
+  update (book : Book) : Observable<any>{
+    return this.http.put(`${this.api}/book/${book.isbn}`, book)
+        .pipe(retry(3)).pipe(catchError(this.errorHandler));
+  }
+
+  check (isbn : string) : Observable<Boolean>{
+    return this.http.get<Boolean>(`${this.api}/book/checkisbn/${isbn}`)
         .pipe(retry(3)).pipe(catchError(this.errorHandler));
   }
 

@@ -14,6 +14,7 @@
     </div>
 
     <div class="field" [class.disabled]="isUpdatingBook">
+        <label>ISBN</label>
         <input formControlName="isbn">
         <div *ngIf="errors.isbn" class="ui negative message">{{ errors.isbn }}</div>
     </div>
@@ -35,6 +36,24 @@
         <div *ngIf="errors.rating" class="ui negative message">{{ errors.rating }}</div>
     </div>
 
+    <div class="field">
+        <label>Thumbnails</label>
+        <div formArrayName="images">
+            <div class="fields" *ngFor="let control of images?.controls; index as i; last as l"
+                 [formGroupName]="i">
+                <input type="hidden" name="id"/>
+                <div class="six wide field">
+                    <input formControlName="title" placeholder="Bild{{i+1}} Titel"/>
+                </div>
+                <div class="nine wide field">
+                    <input formControlName="url" placeholder="http://bild{{i+1}}_url"/>
+                </div>
+                <div class="one wide field" *ngIf="l">
+                    <button (click)="addThumbnailControl()" class="ui large button" type="button">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <button type="submit" class="ui blue button" [disabled]="bookForm.invalid">Speichern</button>
 

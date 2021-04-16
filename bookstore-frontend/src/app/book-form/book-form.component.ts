@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, FormArray, Validators, FormControl} from "@angu
 import { BookFactory} from "../shared/book-factory";
 import { BookStoreService } from "../shared/book-store.service";
 import { BookFormErrorMessages } from "./book-form-error-messages";
+import {Book} from "../shared/book";
+import { BookValidators } from "../shared/book-validators";
 
 @Component({
   selector: 'app-book-form',
@@ -15,7 +17,7 @@ export class BookFormComponent implements OnInit {
   bookForm : FormGroup;
   book = BookFactory.empty();
   isUpdatingBook = false;
-  images: [];
+  images: FormArray;
   //assoziatives Array
   errors: { [key: string]: string } = {};
 
@@ -43,6 +45,7 @@ export class BookFormComponent implements OnInit {
   }
 
    initBook(){
+    this.buildThumbnailsArray();
     this.bookForm = this.fb.group({
       id: this.book.id,
       title: [this.book.title, Validators.required],
@@ -52,16 +55,66 @@ export class BookFormComponent implements OnInit {
               Validators.required,
               Validators.minLength(10),
               Validators.maxLength(13)
-          ]],
+            ], this.isUpdatingBook ? null : BookValidators.isbnExists(this.bs)
+          ],
       description: this.book.description,
       published: this.book.published,
-        rating: [this.book.rating, [Validators.min(0), Validators.max(10)]]
+      rating: [this.book.rating, [Validators.min(0), Validators.max(10)]],
+      images: this.images
 
     });
 
     this.bookForm.statusChanges.subscribe(() =>
     this.updateErrorMessages()
     );
+  }
+
+  buildThumbnailsArray(){
+      this.images = this.fb.array([]);
+      for (let img of this.book.images){
+          let fg = this.fb.group({
+              id: new FormControl(img.id),
+              url: new FormControl(img.url, [Validators.required]),
+              title: new FormControl(img.title, [Validators.required])
+          });
+          this.images.push(fg);
+      }
+
+
+  }
+
+  addThumbnailControl(){
+      this.images.push(this.fb.group({ url: null, title: null}));
+  }
+
+  submitForm(){
+      //wenn url vorhanden, Bild behalten - sonst verwerfen
+        this.bookForm.value.images = this.bookForm.value.images.filter(
+            thumbnail => thumbnail.url
+        );
+
+        const book: Book = BookFactory.fromObject(this.bookForm.value);
+
+        book.authors = this.book.authors;
+
+        if (this.isUpdatingBook) {
+            this.bs.update(book).subscribe(res => {
+                this.router.navigate(['../../books', book.isbn], {
+                    relativeTo: this.route
+                });
+            });
+        } else {
+            book.user_id = 1;
+            console.log(book);
+            this.bs.create(book).subscribe(res => {
+                this.book = BookFactory.empty();
+                this.bookForm.reset(BookFactory.empty());
+                this.router.navigate(['../books'], {
+                    relativeTo: this.route
+                });
+
+            })
+        }
   }
 
   //Formularvalidierung
